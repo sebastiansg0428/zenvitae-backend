@@ -1,0 +1,16 @@
+CREATE DATABASE IF NOT EXISTS zenvitae
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE zenvitae;
+
+CREATE TABLE IF NOT EXISTS products (
+  id INT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  category VARCHAR(60) NOT NULL,
+  category_label VARCHAR(60) NOT NULL,
+  description TEXT,
+  price DECIMAL(10, 2) NOT NULL,
+  in_stock BOOLEAN NOT NULL DEFAULT TRUE,
+  image VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
