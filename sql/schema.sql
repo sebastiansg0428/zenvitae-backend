@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
   in_stock BOOLEAN NOT NULL DEFAULT TRUE,
-  image VARCHAR(500),
+  image MEDIUMTEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

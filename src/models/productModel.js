@@ -19,7 +19,7 @@ async function create(product) {
     const { name, category, categoryLabel, description, price, inStock, image } = product;
     const [result] = await pool.query(
         'INSERT INTO products (name, category, category_label, description, price, in_stock, image) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [name, category, categoryLabel, description, price, inStock, image]
+        [name, category, categoryLabel, description ?? null, price, inStock ?? true, image ?? null]
     );
     return findById(result.insertId);
 }
@@ -28,7 +28,7 @@ async function update(id, product) {
     const { name, category, categoryLabel, description, price, inStock, image } = product;
     await pool.query(
         'UPDATE products SET name = ?, category = ?, category_label = ?, description = ?, price = ?, in_stock = ?, image = ? WHERE id = ?',
-        [name, category, categoryLabel, description, price, inStock, image, id]
+        [name, category, categoryLabel, description ?? null, price, inStock ?? true, image ?? null, id]
     );
     return findById(id);
 }
