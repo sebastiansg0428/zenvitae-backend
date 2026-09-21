@@ -39,6 +39,21 @@ Enviar el token en el header: `Authorization: Bearer <token>`
 - `PUT /api/products/:id` — actualiza un producto
 - `DELETE /api/products/:id` — elimina un producto
 
+### Asistente Zenvitae AI
+
+- `POST /api/assistant/chat` — responde consultas de fitness usando el catálogo actual
+
+Body:
+
+```json
+{
+  "message": "Busco un suplemento para aumentar masa muscular",
+  "history": []
+}
+```
+
+Requiere `GEMINI_API_KEY` y opcionalmente `GEMINI_MODEL` en `.env`. Gemini ofrece una cuota gratuita limitada según el modelo y la cuenta. La clave nunca debe enviarse al frontend.
+
 Body esperado (POST/PUT):
 
 ```json
