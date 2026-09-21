@@ -1,0 +1,6 @@
+
+> zenvitae-backend@1.0.0 start
+> node server.js
+
+◇ injected env (8) from .env
+Zenvitae backend disponible en http://localhost:3000
