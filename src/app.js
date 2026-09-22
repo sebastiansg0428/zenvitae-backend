@@ -38,6 +38,12 @@ app.get('/api/health', async (request, response) => {
     }
 });
 
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    next();
+});
+
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/assistant', assistantRoutes);
