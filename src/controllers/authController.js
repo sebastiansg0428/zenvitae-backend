@@ -28,4 +28,20 @@ async function login(request, response, next) {
     }
 }
 
-module.exports = { login };
+async function register(request, response, next) {
+    try {
+        const { email, password } = request.body;
+        const existingAdmin = await adminModel.findByEmail(email);
+        if (existingAdmin) {
+            return response.status(409).json({ error: 'El correo ya está registrado.' });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12);
+        const admin = await adminModel.create(email, passwordHash);
+        response.status(201).json(admin);
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { login, register };

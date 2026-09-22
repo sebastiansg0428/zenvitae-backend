@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const pool = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const assistantRoutes = require('./routes/assistantRoutes');
@@ -7,11 +8,34 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+    'https://lucent-vacherin-8e5f9f.netlify.app',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Origen no permitido por CORS.'));
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
 app.use(express.json());
 
-app.get('/api/health', (request, response) => {
-    response.status(200).json({ status: 'ok' });
+app.get('/api/health', async (request, response) => {
+    try {
+        await pool.query('SELECT 1');
+        response.status(200).json({ status: 'ok', db: 'connected' });
+    } catch (error) {
+        console.error('Error de conexión a la base de datos en /api/health:', error);
+        response.status(503).json({ status: 'ok', db: 'disconnected' });
+    }
 });
 
 app.use('/api/auth', authRoutes);
