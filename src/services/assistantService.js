@@ -86,8 +86,8 @@ async function askAssistant(message, history = []) {
                 },
                 contents,
                 generationConfig: {
-                    temperature: 0.4,
-                    maxOutputTokens: 500,
+                    temperature: 0.7,
+                    maxOutputTokens: 1600,
                 },
             }),
         }

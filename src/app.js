@@ -1,10 +1,12 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const pool = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const assistantRoutes = require('./routes/assistantRoutes');
 const errorHandler = require('./middlewares/errorHandler');
+
 
 const app = express();
 
@@ -13,6 +15,11 @@ const allowedOrigins = [
     'http://127.0.0.1:5500',
     'http://localhost:5500',
 ];
+
+// LÍNEA CLAVE: Hacer que la carpeta 'uploads' sea accesible públicamente
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+
 
 app.use(
     cors({
