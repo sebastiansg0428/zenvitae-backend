@@ -1,23 +1,25 @@
 const productModel = require('../models/productModel');
 
-async function getProducts(request, response, next) {
+// Controlador para obtener todos los productos de la base de datos
+async function getProducts(req, res) {
     try {
-        const products = await productModel.findAll();
-        response.status(200).json(products);
+        const products = await productModel.findAll(); // <--- Aquí consulta tu base de datos MySQL
+        res.json(products);
     } catch (error) {
-        next(error);
+        res.status(500).json({ error: 'Error al obtener los productos de la base de datos' });
     }
 }
 
-async function getProductById(request, response, next) {
+// Controlador para obtener un producto por ID
+async function getProductById(req, res) {
     try {
-        const product = await productModel.findById(request.params.id);
+        const product = await productModel.findById(req.params.id);
         if (!product) {
-            return response.status(404).json({ error: 'Producto no encontrado.' });
+            return res.status(404).json({ error: 'Producto no encontrado' });
         }
-        response.status(200).json(product);
+        res.json(product);
     } catch (error) {
-        next(error);
+        res.status(500).json({ error: 'Error al obtener el producto' });
     }
 }
 
