@@ -6,7 +6,10 @@ const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const assistantRoutes = require('./routes/assistantRoutes');
 const errorHandler = require('./middlewares/errorHandler');
-
+const adminRoutes = require('./routes/adminRoutes');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_super_segura';
 
 const app = express();
 
@@ -50,6 +53,8 @@ app.use((req, res, next) => {
     next();
 });
 
+
+app.use('/api/admin', adminRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);

@@ -1,47 +1,52 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const adminModel = require('../models/adminModel');
+const pool = require('../config/db');
 
-async function login(request, response, next) {
+const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_super_segura';
+
+const login = async (req, res) => {
+    const { email, password } = req.body;
+
     try {
-        const { email, password } = request.body;
+        // Consulta limpia a la tabla de Administradores
+        const [rows] = await pool.query('SELECT * FROM `admins` WHERE `email` = ?', [email]);
 
-        const admin = await adminModel.findByEmail(email);
-        if (!admin) {
-            return response.status(401).json({ error: 'Credenciales inválidas.' });
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
         }
 
-        const passwordMatches = await bcrypt.compare(password, admin.passwordHash);
-        if (!passwordMatches) {
-            return response.status(401).json({ error: 'Credenciales inválidas.' });
+        const admin = rows[0];
+
+        // Verificamos la contraseña encriptada con bcrypt
+        const isMatch = await bcrypt.compare(password, admin.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
         }
 
+        // Generamos el Token JWT (expira en 8 horas)
         const token = jwt.sign(
-            { sub: admin.id, email: admin.email },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+            { id: admin.id, email: admin.email },
+            JWT_SECRET,
+            { expiresIn: '8h' }
         );
 
-        response.status(200).json({ token });
+        res.json({
+            message: 'Login exitoso',
+            token,
+            admin: { id: admin.id, email: admin.email }
+        });
+
     } catch (error) {
-        next(error);
+        console.error('Error en el login:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
-}
+};
 
-async function register(request, response, next) {
-    try {
-        const { email, password } = request.body;
-        const existingAdmin = await adminModel.findByEmail(email);
-        if (existingAdmin) {
-            return response.status(409).json({ error: 'El correo ya está registrado.' });
-        }
+const register = async (req, res) => {
+    res.status(403).json({ error: 'Registro deshabilitado por política de administrador único' });
+};
 
-        const passwordHash = await bcrypt.hash(password, 12);
-        const admin = await adminModel.create(email, passwordHash);
-        response.status(201).json(admin);
-    } catch (error) {
-        next(error);
-    }
-}
-
-module.exports = { login, register };
+module.exports = {
+    login,
+    register
+};
