@@ -39,6 +39,13 @@ Enviar el token en el header: `Authorization: Bearer <token>`
 - `PUT /api/products/:id` — actualiza un producto
 - `DELETE /api/products/:id` — elimina un producto
 
+### Visitas
+
+- `POST /api/visitors` — registra una visita sin autenticación ni body. Responde `201` con `{ "message": "Visita registrada" }`, o `500` si falla la inserción.
+- `GET /api/admin/visitors` — requiere JWT de administrador y devuelve `{ "totalVisits": 123 }`.
+
+Cada POST registra una visita, incluidas las solicitudes repetidas. La tabla `visitas` está definida en `sql/schema.sql`, con `id AUTO_INCREMENT` y `createdAt`; el registro usa `NOW()` para guardar la fecha y hora de MySQL. `CREATE TABLE IF NOT EXISTS` no modifica tablas existentes.
+
 ### Asistente Zenvitae AI
 
 - `POST /api/assistant/chat` — responde consultas de fitness usando el catálogo actual

@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const assistantRoutes = require('./routes/assistantRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const adminRoutes = require('./routes/adminRoutes');
+const visitorRoutes = require('./routes/visitorRoutes');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_super_segura';
@@ -55,6 +56,7 @@ app.use((req, res, next) => {
 
 
 app.use('/api/admin', adminRoutes);
+app.use('/api', visitorRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
