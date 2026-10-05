@@ -15,7 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_super_segura';
 const app = express();
 
 const allowedOrigins = [
-    'https://lucent-vacherin-8e5f9f.netlify.app',
+    'https://zenvitae.netlify.app',
     'http://127.0.0.1:5500',
     'http://localhost:5500',
 ];
