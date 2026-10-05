@@ -61,6 +61,8 @@ Body:
 
 Requiere `GEMINI_API_KEY` y opcionalmente `GEMINI_MODEL` en `.env`. Gemini ofrece una cuota gratuita limitada según el modelo y la cuenta. La clave nunca debe enviarse al frontend.
 
+Si Gemini está saturado (respuestas `500`/`503`) o falla la conexión, el backend reintenta hasta 2 veces (esperando 1 s y 2 s). Si sigue fallando, responde `503` con un mensaje para intentar más tarde. Los errores `429` (cuota agotada) no se reintentan.
+
 Body esperado (POST/PUT):
 
 ```json

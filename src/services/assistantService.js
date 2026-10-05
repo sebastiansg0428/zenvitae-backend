@@ -51,6 +51,45 @@ function normalizeMessages(messages) {
         }));
 }
 
+// 500 y 503 suelen ser fallos temporales de Gemini (por ejemplo, alta demanda).
+// 429 no se reintenta: indica cuota agotada y reintentar consumiría más cuota.
+const RETRYABLE_STATUSES = new Set([500, 503]);
+const RETRY_DELAYS_MS = [1000, 2000];
+const BUSY_MESSAGE = 'El asistente está muy ocupado en este momento. Intenta de nuevo en unos segundos.';
+
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function requestGeminiWithRetry(url, options) {
+    for (let attempt = 0; ; attempt += 1) {
+        const canRetry = attempt < RETRY_DELAYS_MS.length;
+        let response;
+
+        try {
+            response = await fetch(url, options);
+        } catch (networkError) {
+            if (canRetry) {
+                await wait(RETRY_DELAYS_MS[attempt]);
+                continue;
+            }
+            const error = new Error(`No se pudo conectar con Gemini: ${networkError.message}`);
+            error.statusCode = 503;
+            error.publicMessage = BUSY_MESSAGE;
+            throw error;
+        }
+
+        if (RETRYABLE_STATUSES.has(response.status) && canRetry) {
+            console.warn(`Gemini respondió ${response.status}; reintento ${attempt + 1} de ${RETRY_DELAYS_MS.length}.`);
+            await wait(RETRY_DELAYS_MS[attempt]);
+            continue;
+        }
+
+        const data = await response.json().catch(() => ({}));
+        return { response, data };
+    }
+}
+
 async function askAssistant(message, history = []) {
     if (!process.env.GEMINI_API_KEY) {
         const error = new Error('El asistente no está configurado. Falta GEMINI_API_KEY.');
@@ -69,34 +108,32 @@ async function askAssistant(message, history = []) {
         { role: 'user', parts: [{ text: message.trim().slice(0, 2000) }] },
     ];
     const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-    const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            systemInstruction: {
+                parts: [
+                    {
+                        text: `${assistantInstructions}\n\nCatálogo actual de Zenvitae (fuente única de productos):\n${catalog}`,
+                    },
+                ],
             },
-            body: JSON.stringify({
-                systemInstruction: {
-                    parts: [
-                        {
-                            text: `${assistantInstructions}\n\nCatálogo actual de Zenvitae (fuente única de productos):\n${catalog}`,
-                        },
-                    ],
-                },
-                contents,
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 1600,
-                },
-            }),
-        }
-    );
+            contents,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1600,
+            },
+        }),
+    };
 
-    const data = await response.json();
+    const { response, data } = await requestGeminiWithRetry(url, requestOptions);
     if (!response.ok) {
         const error = new Error(data.error?.message || 'Gemini rechazó la solicitud.');
-        error.statusCode = response.status === 429 ? 429 : 502;
+        error.statusCode = response.status === 429 ? 429 : RETRYABLE_STATUSES.has(response.status) ? 503 : 502;
         error.publicMessage =
             response.status === 401
                 ? 'La clave de Gemini no es válida. Revisa GEMINI_API_KEY.'
@@ -104,7 +141,9 @@ async function askAssistant(message, history = []) {
                     ? 'El modelo de Gemini no está disponible. Revisa GEMINI_MODEL.'
                     : response.status === 429
                         ? 'Se agotó la cuota gratuita de Gemini o hay demasiadas solicitudes.'
-                        : 'Gemini no pudo responder. Revisa la clave, la cuota y la conexión.';
+                        : RETRYABLE_STATUSES.has(response.status)
+                            ? BUSY_MESSAGE
+                            : 'Gemini no pudo responder. Revisa la clave, la cuota y la conexión.';
         throw error;
     }
 
